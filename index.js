@@ -29,7 +29,11 @@ app.use("/api/v1/question",questionAnswerRoutes);
 
 // ----------------------------------------------------------------
 mongoose
-.connect(process.env.MONGODB_URI)
+.connect(process.env.MONGODB_URI,{
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000 // Increase timeout to 30 seconds
+  })
 .then(()=>{console.log("Db connected")})
 .catch((e)=>{console.log("Db failed to connect :",e)})
 
