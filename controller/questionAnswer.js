@@ -31,7 +31,7 @@ export const createQuestion = async (req, res) => {
       totalAttempted: 0,
       toalCorrected: 0,
     });
-  } else if (quizType == "POLL") {
+  } else if (quizType == "POLL" || quizType === "Poll") {
     questionAnswerData = new QuestionAnswer({
       quizRefId: quizRefId,
       options: options,
@@ -60,14 +60,14 @@ export const listQuestion = async (req, res) => {
         listQuestion.map(async (questionData) => {
           const { quizRefId, question, correctAnswerOption, options, timer } =
             questionData;
-          if (!question || !options || !quizRefId || !timer) {
+          if (!question || !options || !quizRefId || !correctAnswerOption) {
             throw new Error("Bad request hereeeeeeeeeeeeeeeeeeeeeeeeeeee");
           }
 
           questionAnswerData = new QuestionAnswer({
             quizRefId: quizRefId,
             options: options,
-            correctAnswerOption: 0,
+            correctAnswerOption: correctAnswerOption%4,
             question: question,
             totalAttempted: 0,
             totalCorrected: 0,
@@ -76,12 +76,14 @@ export const listQuestion = async (req, res) => {
           await questionAnswerData.save();
         })
       );
-    } else if (quizType === "POLL") {
+    } else if (quizType === "POLL" || quizType === "Poll") {
       const questionAnswerDto = await Promise.all(
         listQuestion.map(async (questionData) => {
           const { quizRefId, question, options, timer } = questionData;
-          if (!question || !options || !quizRefId || !timer) {
-            throw new Error("Bad request here");
+          if (!question || !options || !quizRefId 
+            // || !timer
+          ) {
+            throw new Error("Bad request hereeeeeeeeeee");
           }
           questionAnswerData = new QuestionAnswer({
             quizRefId: quizRefId,
@@ -103,6 +105,61 @@ export const listQuestion = async (req, res) => {
     if (error.message === "Bad request here") {
       return res.status(400).json({ errorMessage: error.message });
     }
+    res
+      .status(500)
+      .json({ errorMessage: "An error occurred while saving questions" });
+}
+};
+
+export const submitQuiz = async (req, res) => {
+  const { listQuestion, quizType } = req.body.quizData;
+
+  if (!quizType) {
+    return res.status(400).json({ errorMessage: "quizType is undefined" });
+  }
+
+  try {
+    if (quizType === "Q/A") {
+      await Promise.all(
+        listQuestion.map(async (questionData) => {
+          const { id, isCorrected } = questionData;
+          const questionAnswer = await QuestionAnswer.findById(id);
+          let totalCorrected1 = questionAnswer.totalCorrected;
+    
+          if (isCorrected) {
+            totalCorrected1 += 1;
+          }
+          await QuestionAnswer.updateOne(
+            { _id: id },
+            {
+              $set: {
+                totalAttempted: questionAnswer.totalAttempted + 1,
+                totalCorrected: totalCorrected1,
+              },
+            }
+          );
+        })
+      );
+    } else if (quizType === "POLL" || quizType === "Poll") {
+      await Promise.all(
+        listQuestion.map(async (questionData) => {
+          const { id, optionSelected } = questionData;
+          const questionAnswer = await QuestionAnswer.findById(id);
+          let totalCorrected = questionAnswer.selectedOption[optionSelected].count + 1;
+          await QuestionAnswer.updateOne(
+            { _id: id },
+            { $set: { [`selectedOption.${optionSelected}.count`]: totalCorrected } }
+          );
+        })
+      );
+    } else {
+      return res.status(500).json({ errorMessage: "Not a valid type" });
+    }
+    res.json({
+      message: "List of questions created successfully",
+    });
+  } catch (error) {
+    console.error(error);
     res
       .status(500)
       .json({ errorMessage: "An error occurred while saving questions" });

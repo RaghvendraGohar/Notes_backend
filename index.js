@@ -7,7 +7,7 @@ import dotenv from "dotenv"
 import cors from 'cors';
 
 const app = express();
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 dotenv.config();
 app.use(cors());
 
@@ -29,7 +29,7 @@ app.use("/api/v1/question",questionAnswerRoutes);
 
 // ----------------------------------------------------------------
 mongoose
-.connect("mongodb+srv://raghv:123123123@cluster0.mbasgwh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+.connect(process.env.MONGODB_URI)
 .then(()=>{console.log("Db connected")})
 .catch((e)=>{console.log("Db failed to connect :",e)})
 

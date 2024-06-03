@@ -35,7 +35,7 @@ const questionAnswerSchema = new mongoose.Schema({
     totalAttempted :{
         type : Number,
     },
-    toalCorrected :{
+    totalCorrected :{
         type : Number,
     },
     selectedOption: {

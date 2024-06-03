@@ -77,9 +77,74 @@ export const getAllQuizById = async (req, res) => {
   }
 };
 
-export const playQuiz = async(req,res) => {
-  const link = req.body.link
-  const quiz = await Quiz.findOne({link:link})
-  const questionAnswer = await QuestionAnswer.find({ quizRefId:quiz[0].id})
-  res.json(questionAnswer)
-}
+export const playQuiz = async (req, res) => {
+  try {
+    const link = req.query.link;
+    if (!link) {
+      return res.status(400).json({ error: 'Link parameter is required' });
+    }
+
+    const quiz = await Quiz.findOne({ link: link });
+    if (!quiz) {
+      console.error('Quiz not found for link:', link);
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    console.log(quiz)
+    console.log('Quiz found:', quiz.id);
+    const quizType =quiz.quizType;
+
+    const questionAnswer = await QuestionAnswer.find({ quizRefId: quiz.id });
+    res.json({questionAnswer,quizType});
+  } catch (error) {
+    console.error('Error in playQuiz:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const deleteQuiz = async (req, res) => {
+  try {
+    const quizId = req.params.id;
+    // Find the quiz by ID and check if it belongs to the current user
+    const quiz = await Quiz.findOne({ _id: quizId});
+    if (!quiz) {
+      return res.status(404).json({ errorMessage: "Quiz not found" });
+    }
+
+    // Delete the quiz
+    await Quiz.deleteOne({ _id: quizId });
+
+    // Optionally, delete associated question answers
+    await QuestionAnswer.deleteMany({ quizRefId: quizId });
+
+    res.status(200).json({ message: "Quiz deleted successfully" });
+  } catch (error) {
+    console.error('Error in deleteQuiz:', error);
+    res.status(500).json({ errorMessage: "Internal server error" });
+  }
+};
+
+
+export const updateQuizImpression = async (req, res) => {
+  try {
+    const quizId = req.params.id;
+
+    // Find the quiz by ID
+    const quiz = await Quiz.findOne({ _id: quizId });
+    if (!quiz) {
+      return res.status(404).json({ errorMessage: "Quiz not found" });
+    }
+
+    // Increment the impression count
+    quiz.impression += 1;
+
+    // Save the updated quiz
+    const updatedQuiz = await quiz.save();
+
+    res.status(200).json({ message: "Impression updated successfully", updatedQuiz });
+  } catch (error) {
+    console.error('Error in updateQuizImpression:', error);
+    res.status(500).json({ errorMessage: "Internal server error" });
+  }
+};
+
