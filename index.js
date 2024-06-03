@@ -29,7 +29,7 @@ app.use("/api/v1/question",questionAnswerRoutes);
 
 // ----------------------------------------------------------------
 mongoose
-.connect("raghv:123123123@cluster0.mbasgwh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",{
+.connect("mongodb+srv://raghv:123123123@cluster0.mbasgwh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",{
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 30000 // Increase timeout to 30 seconds
